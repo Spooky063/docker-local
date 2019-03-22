@@ -1,0 +1,64 @@
+version: "3.2"
+
+services:
+    mariadb:
+      image: mariadb:10.2
+      container_name: local_mariadb
+      volumes:
+          - mysql-data:/var/lib/mysql
+          - mysql-dump:/root/dumps
+      environment:
+          - MYSQL_ROOT_PASSWORD=root
+      ports:
+          - 3306:3306
+      command:
+          - mysqld
+          - --character-set-server=utf8mb4
+          - --collation-server=utf8mb4_unicode_ci
+          - --key_buffer_size=512M
+          - --max_allowed_packet=16M
+          - --query_cache_size=100M
+          - --query_cache_limit=256k
+          - --query_cache_min_res_unit=2k
+          - --thread_stack=256K
+          - --innodb_flush_log_at_trx_commit=2
+          - --innodb_max_dirty_pages_pct=0
+          - --innodb_lock_wait_timeout=120
+          - --sync_binlog=0
+          - --innodb_thread_concurrency=0
+          - --innodb_flush_method=O_DIRECT
+
+    php-apache:
+        image: docker.local.com/php:73
+        container_name: local_php_apache
+        volumes:
+            - www:/var/www/html
+        links:
+            - mariadb:db
+            - mariadb:mysql
+        ports:
+            - 80:80
+
+    mail:
+        image: djfarrelly/maildev
+        container_name: local_maildev
+        ports:
+            - 1080:80
+            - 1025:25
+
+volumes:
+    mysql-data: 
+        driver_opts:
+            type: none
+            device: ${PWD}/mysql-data
+            o: bind
+    mysql-dump: 
+        driver_opts:
+            type: none
+            device: ${PWD}/mysql-dumps
+            o: bind
+    www:
+        driver_opts:
+            type: none
+            device: ${PWD}/www
+            o: bind

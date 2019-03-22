@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+    php-apache:
+        links:
+            - solr
+
+    solr:
+        image: solr:7.3
+        container_name: custom_solr
+        volumes:
+            - solr-data:/opt/solr/server/solr/mycores
+        ports:
+            - "8983:8983"
+
+volumes:
+    solr-data:
+        driver_opts:
+            type: none
+            device: ${PWD}/solr-data/mycores
+            o: bind

@@ -1,0 +1,50 @@
+version: '3.2'
+
+services:
+  mariadb:
+    image: mariadb:10.2
+    volumes:
+      - ${HOME}/Docker/mysql-data:/var/lib/mysql
+      - ${HOME}/Docker/mysql-dumps:/root/dumps
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - 3306:3306
+    command:
+      - mysqld
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --key_buffer_size=512M
+      - --max_allowed_packet=16M
+      - --query_cache_size=100M
+      - --query_cache_limit=256k
+      - --query_cache_min_res_unit=2k
+      - --thread_stack=256K
+      - --innodb_flush_log_at_trx_commit=2
+      - --innodb_max_dirty_pages_pct=0
+      - --innodb_lock_wait_timeout=120
+      - --sync_binlog=0
+      - --innodb_thread_concurrency=0
+      - --innodb_flush_method=O_DIRECT
+
+  php-apache:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: 1000
+        GROUP_ID: 1000
+        IP_ADDRESS: 172.17.0.1
+    volumes:
+      - ${HOME}/Docker/www:/var/www/html
+    links:
+      - mariadb:db
+      - mariadb:mysql
+    ports:
+      - 80:80
+
+  mail:
+    image: djfarrelly/maildev
+    ports:
+      - 1080:80
+      - 1025:25
